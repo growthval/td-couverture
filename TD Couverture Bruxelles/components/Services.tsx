@@ -141,7 +141,7 @@ const Services: React.FC<{ onServiceSelect: (serviceValue: string) => void }> = 
                 </div>
 
                 {/* Urgence CTA banner */}
-                <div className="mt-12 bg-[var(--color-urgent)] rounded-lg p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4 scroll-reveal opacity-0 translate-y-5 transition-all duration-700" style={{ transitionDelay: '500ms' }}>
+                <div id="urgence" className="mt-12 bg-[var(--color-urgent)] rounded-lg p-6 md:p-8 flex flex-col md:flex-row items-center justify-between gap-4 scroll-reveal opacity-0 translate-y-5 transition-all duration-700" style={{ transitionDelay: '500ms' }}>
                     <div className="text-white text-center md:text-left">
                         <p className="font-heading font-extrabold text-xl md:text-2xl">Urgence toiture ?</p>
                         <p className="opacity-90 mt-1">Fuite, tempête, dégâts — nous intervenons rapidement.</p>
