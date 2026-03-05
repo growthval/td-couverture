@@ -27,16 +27,18 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({ beforeImg, afterImg, 
     const handleTouchEnd = useCallback(() => setIsDragging(false), []);
     const handleTouchMove = useCallback(
         (e: TouchEvent) => {
+            if (!isDragging) return;
+            e.preventDefault();
             if (e.touches.length > 0) handleMove(e.touches[0].clientX);
         },
-        [handleMove],
+        [handleMove, isDragging],
     );
 
     useEffect(() => {
         window.addEventListener('mouseup', handleMouseUp);
         window.addEventListener('mousemove', handleMouseMove);
         window.addEventListener('touchend', handleTouchEnd);
-        window.addEventListener('touchmove', handleTouchMove);
+        window.addEventListener('touchmove', handleTouchMove, { passive: false });
         return () => {
             window.removeEventListener('mouseup', handleMouseUp);
             window.removeEventListener('mousemove', handleMouseMove);
@@ -49,7 +51,7 @@ const ImageComparison: React.FC<ImageComparisonProps> = ({ beforeImg, afterImg, 
         <div className="rounded-lg shadow-[0_4px_24px_rgba(44,62,80,0.1)] overflow-hidden card-lift">
             <div
                 ref={containerRef}
-                className="relative w-full aspect-[4/3] select-none touch-none"
+                className="relative w-full aspect-[4/3] select-none"
             >
                 {/* After (background) */}
                 <div
