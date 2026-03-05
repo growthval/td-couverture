@@ -1,0 +1,89 @@
+/**
+ * @OnlyCurrentDoc
+ */
+
+// Gère les requêtes 'OPTIONS' (pré-vérification CORS) envoyées par le navigateur.
+// C'est une étape de sécurité obligatoire pour que les requêtes cross-domaines fonctionnent.
+function doOptions(e) {
+  return ContentService
+    .createTextOutput()
+    .setHeader('Access-Control-Allow-Origin', 'https://couvreur-boulanger.static.domains') // Autorise votre site web
+    .setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS')
+    .setHeader('Access-Control-Allow-Headers', 'Content-Type'); // Autorise l'envoi de données JSON
+}
+
+/**
+ * La fonction principale qui s'exécute lorsqu'une requête POST est envoyée à l'URL du script.
+ * Elle est déclenchée par la soumission du formulaire sur le site web.
+ */
+function doPost(e) {
+  try {
+    // Cible la feuille de calcul par son nom pour plus de robustesse.
+    // IMPORTANT: Remplacez "Réponses" si le nom de votre feuille est différent.
+    const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName("Réponses");
+    
+    // Parse les données JSON envoyées depuis le formulaire.
+    const data = JSON.parse(e.postData.contents);
+    
+    const timestamp = new Date();
+
+    // Prépare la ligne à insérer dans le Google Sheet.
+    const newRow = [
+      timestamp,
+      data.project || 'N/A',
+      data.details || 'N/A',
+      data.size ? `${data.size.value} ${data.size.unit}` : 'N/A',
+      data.contact.nom || 'N/A',
+      data.contact.prenom || 'N/A',
+      data.contact.email || 'N/A',
+      data.contact.telephone || 'N/A',
+      data.contact.codePostal || 'N/A',
+    ];
+
+    // Ajoute la nouvelle ligne à la feuille de calcul.
+    sheet.appendRow(newRow);
+
+    // --- Envoi de l'e-mail de notification ---
+    const recipients = "entreprisetdcouverture@gmail.com, davidkiwi@hotmail.fr";
+    const subject = "Nouveau lead google ads - Estimation";
+    
+    const formattedDate = Utilities.formatDate(timestamp, "Europe/Paris", "dd/MM/yyyy 'à' HH:mm:ss");
+
+    const emailBody = `
+Bonjour,
+
+Une nouvelle personne vient de faire une simulation sur le site le ${formattedDate}.
+
+Voici les informations :
+Nom : ${data.contact.nom || 'Non fourni'}
+Prénom : ${data.contact.prenom || 'Non fourni'}
+Tél : ${data.contact.telephone || 'Non fourni'}
+Mail : ${data.contact.email || 'Non fourni'}
+Code Postal : ${data.contact.codePostal || 'Non fourni'}
+
+Projet : ${data.project || 'Non fourni'}
+Détail : ${data.details || 'Non fourni'}
+Dimension : ${data.size ? `${data.size.value} ${data.size.unit}` : 'Non nécessaire'}
+
+Rappeler cette personne le plus rapidement possible afin d'établir un devis avec elle.
+`;
+
+    MailApp.sendEmail(recipients, subject, emailBody);
+
+    // Renvoie une réponse de succès AVEC l'en-tête CORS.
+    // C'est la ligne clé qui autorise votre site web à recevoir cette réponse.
+    return ContentService
+      .createTextOutput(JSON.stringify({ "result": "success" }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', 'https://couvreur-boulanger.static.domains');
+
+  } catch (error) {
+    Logger.log("ERREUR dans doPost: " + error.toString() + " | Données reçues: " + e.postData.contents);
+    
+    // Renvoie une réponse d'erreur AVEC l'en-tête CORS pour le débogage.
+    return ContentService
+      .createTextOutput(JSON.stringify({ "result": "error", "message": error.toString() }))
+      .setMimeType(ContentService.MimeType.JSON)
+      .setHeader('Access-Control-Allow-Origin', 'https://couvreur-boulanger.static.domains');
+  }
+}
