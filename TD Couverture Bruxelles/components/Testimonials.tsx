@@ -20,6 +20,7 @@ const Testimonials: React.FC = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [containerHeight, setContainerHeight] = useState<number | string>('auto');
     const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const touchStartX = useRef<number | null>(null);
 
     const updateHeight = useCallback(() => {
         if (cardRefs.current[currentIndex]) {
@@ -42,6 +43,23 @@ const Testimonials: React.FC = () => {
     useEffect(() => {
         updateHeight();
     }, [currentIndex, updateHeight]);
+
+    const handleTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX;
+    };
+
+    const handleTouchEnd = (e: React.TouchEvent) => {
+        if (touchStartX.current === null) return;
+        const delta = touchStartX.current - e.changedTouches[0].clientX;
+        if (Math.abs(delta) > 40) {
+            if (delta > 0) {
+                setCurrentIndex((prev) => (prev + 1) % testimonials.length);
+            } else {
+                setCurrentIndex((prev) => (prev - 1 + testimonials.length) % testimonials.length);
+            }
+        }
+        touchStartX.current = null;
+    };
 
     return (
         <section className="bg-[var(--color-primary)] py-16 md:py-24">
@@ -70,7 +88,11 @@ const Testimonials: React.FC = () => {
                 </div>
 
                 {/* Carousel */}
-                <div className="relative">
+                <div
+                    className="relative"
+                    onTouchStart={handleTouchStart}
+                    onTouchEnd={handleTouchEnd}
+                >
                     <div
                         className="relative transition-[height] duration-500 ease-in-out"
                         style={{ height: containerHeight }}
